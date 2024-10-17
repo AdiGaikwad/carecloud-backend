@@ -8,8 +8,8 @@ datasource db {
 }
 
 model User {
-  id                     String          @unique @default(uuid())
-  username               String          @unique
+  id                     String        @id  @unique @default(uuid())
+  // username               String          @unique
   password               String 
   avatar                 String?
   cover                  String?
