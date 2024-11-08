@@ -7,9 +7,12 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
 let whitelist = [
+  'http://localhost:5000',
     'http://developer.adi:5000',
     "developer.adi:5000", 
     'http://developer.adi:3000',
+    'localhost:5000',
+
     "developer.adi:3000",
     ];
 var corsOptions = {

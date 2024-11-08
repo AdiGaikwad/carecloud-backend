@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 import { customAlphabet } from "nanoid";
 const alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const nanoid = customAlphabet(alphabet, 14);
-
+import jwt from "jsonwebtoken";
 router.get("/status", (req, res) => {
   res.json({
     message: "Server is up",
@@ -33,18 +33,14 @@ router.post("/register", async (req, res) => {
           id: `CCH-U${nanoid(14)}`,
         },
       });
-      res
-        .status(201)
-        .json({
-          Success: true,
-          msg: "Registered Successfully",
-          healthId: user.id,
-        });
+      res.status(201).json({
+        Success: true,
+        msg: "Registered Successfully",
+        healthId: user.id,
+      });
     } catch (err) {
       console.log(err);
-      res
-        .status(200)
-        .json({ Error: true, msg: "Email already exists" });
+      res.status(200).json({ Error: true, msg: "Email already exists" });
     }
   } else {
     res.json({
@@ -66,7 +62,10 @@ router.post("/login", async (req, res) => {
       });
 
       if (!user) {
-        return res.json( { Error: true, message: "Incorrect HealthID or email." });
+        return res.json({
+          Error: true,
+          message: "Incorrect HealthID or email.",
+        });
       }
 
       // Compare the plain password with the hashed password stored in the database
@@ -74,9 +73,19 @@ router.post("/login", async (req, res) => {
       const isPasswordValid = await bcrypt.compare(hashed, user.password);
 
       if (!isPasswordValid) {
-            res.json(  { Error: true,  message: "Incorrect password." });
+        res.json({ Error: true, message: "Incorrect password." });
       } else {
-        res.json("Correct pass");
+        try {
+          const { password, ...newUser } = user;
+          //@ts-ignore
+          const token = jwt.sign({ user: newUser }, process.env.JWT_SECRET, {
+            expiresIn: "2d",
+          });
+          res.json({ token, msg: "Login Successfull" });
+        } catch (err) {
+          console.log(err);
+          res.json({ Error: true, msg: "Unable to login." });
+        }
       }
     } catch (err) {
       console.log(err);
