@@ -9,6 +9,7 @@ import { customAlphabet } from "nanoid";
 const alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const nanoid = customAlphabet(alphabet, 14);
 import jwt from "jsonwebtoken";
+import authCheck from "../middlewares/authCheck.js"
 router.get("/status", (req, res) => {
   res.json({
     message: "Server is up",
@@ -98,5 +99,10 @@ router.post("/login", async (req, res) => {
     });
   }
 });
+
+
+router.get("/get/user/data", authCheck,  async (req, res)=>{
+ res.json(req.user)
+})
 
 export default router;

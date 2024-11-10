@@ -2,6 +2,9 @@ import express from "express"
 import bodyParser from "body-parser";
 import cors from "cors"
 const app = express();
+import cookieParser from "cookie-parser"
+
+app.use(cookieParser())
 
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
