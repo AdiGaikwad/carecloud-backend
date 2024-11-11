@@ -21,6 +21,7 @@ model User {
   phone                  String?         @unique
   age                    Int?
   gender                 String?
+  role                   String         @default("user")
   verifications          Verification[]
  
 }
