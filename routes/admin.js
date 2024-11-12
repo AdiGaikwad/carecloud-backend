@@ -72,15 +72,65 @@ router.post("/register" , async (req,res)=>{
 
 });
 
-router.post("/login" ,async(req,req)=>
+router.post("/login" ,async(req,res)=>
 {
-    const [email , password] = req.body
+    const {email , password} = req.body
+    console.log(email); 
+    console.log(password)
 
-    if(!password)
+    if(email&&password)
     {
-        res.send({
-            message: "password incorrect"
-        })
+        try {
+            const user = await prisma.user.findFirst({
+                where: {
+                    OR: [{ email: email }, { id: email }],
+                  },
+            })
+            console.log(user);
+            if(!user)
+            {
+                return res.json({
+                    Error: true,
+                    message: "Incorrect HealthID or email.",
+                  });
+
+               
+            }
+          
+            const isPasswordValid = await bcrypt.compare(password , user.password)
+            if(!isPasswordValid)
+            {
+                res.json({
+                    message: "Incorrect Password"
+                })
+            }
+            else{
+                try {
+                    const { password, ...newUser } = user;
+                    //@ts-ignore
+                    const token = jwt.sign({ user: newUser }, process.env.JWT_SECRET, {
+                      expiresIn: "2d",
+                    });
+                    res.json({ token, msg: "Login Successfull" });
+                  } catch (err) {
+                    console.log(err);
+                    res.json({ Error: true, msg: "Unable to login." });
+                  }
+            }
+
+
+        }
+        catch (err)
+        {
+            console.log(err);
+            res.status(200).json({ Error: true, msg: "Unable to login " });
+        }
+    }
+    else{
+        res.json({
+            Error: true,
+            msg: "Please check your inputs ",
+          });
     }
 
 })
