@@ -24,7 +24,7 @@ router.post("/register", async (req, res) => {
     let hash256 = createHash("sha256").update(password).digest("hex");
     let salt = bcrypt.genSaltSync(SALT_ROUNDS);
     let hashed = bcrypt.hashSync(hash256, salt);
-    try {
+    try   {
       const user = await prisma.user.create({
         data: {
           email,

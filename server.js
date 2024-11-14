@@ -36,6 +36,9 @@ app.use(cors(corsOptions))
 
 
 import auth from "./routes/auth.js"
+import admin from "./routes/admin.js"
+
+app.use("/admin/v1",admin)
 
 app.use("/auth/v1/", auth)
 
