@@ -8,36 +8,62 @@ datasource db {
 }
 
 model User {
-  id                     String        @id  @unique @default(uuid())
+  id            String         @id @unique @default(uuid())
   // username               String          @unique
-  password               String 
-  avatar                 String?
-  cover                  String?
-  firstName              String?
-  lastName               String?
-  bio                    String?
-  address                String?
-  email                  String          @unique
-  phone                  String?         @unique
-  age                    Int?
-  gender                 String?
-  role                   String         @default("user")
-  verifications          Verification[]
- 
+  password      String
+  role          String
+  avatar        String?
+  cover         String?
+  firstName     String?
+  lastName      String?
+  bio           String?
+  bloodgroup    String?
+  address       String?
+  email         String         @unique
+  phone         String?        @unique
+  age           Int?
+  gender        String?
+  otp           Int?
+  verifications Verification[]
+  doctorAccess  Access[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
+model Doctor {
+  id         String   @id @unique @default(uuid())
+  password   String
+  role       String
+  avatar     String?
+  cover      String?
+  firstName  String?
+  lastName   String?
+  bio        String?
+  address    String?
+  email      String   @unique
+  phone      String?  @unique
+  age        Int?
+  gender     String?
+  userAccess Access[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
 
-
+model Access {
+  accessid  String   @id @unique @default(uuid())
+  doctorId  String
+  userId    String
+  doctor    Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expires   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 
 model Verification {
   userId            String   @id
-  user              User     @relation(fields: [userId], references: [id])
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   emailVerified     Boolean? @default(false)
   phoneVerified     Boolean? @default(false)
   documentsVerified Boolean? @default(false)
 }
-
-
-
-
-  

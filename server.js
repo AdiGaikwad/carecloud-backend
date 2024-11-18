@@ -1,57 +1,59 @@
-import express from "express"
+import express from "express";
 import bodyParser from "body-parser";
-import cors from "cors"
+import cors from "cors";
 const app = express();
-import cookieParser from "cookie-parser"
+import cookieParser from "cookie-parser";
 
-app.use(cookieParser())
+app.use(cookieParser());
 
-app.use(bodyParser.urlencoded({ extended: false }))
-app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
 let whitelist = [
-  'http://localhost:5000',
-    'http://developer.adi:5000',
-    "developer.adi:5000", 
-    'http://developer.adi:3000',
-    'localhost:5000',
+  "http://localhost:5000",
+  "http://developer.adi:5000",
+  "developer.adi:5000",
+  "http://developer.adi:3000",
+  "localhost:5000",
 
-    "developer.adi:3000",
-    ];
+  "developer.adi:3000",
+];
+// var corsOptions = {
+//   origin: function (origin, callback) {
+//     if (whitelist.indexOf(origin) !== -1 || !origin) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error("Not allowed by CORS"));
+//     }
+//   },
+//   methods: ["POST", "GET", "OPTIONS", "HEAD"],
+//   // allowedHeaders: ['cookie'],
+//   credentials: false,
+// };
+
 var corsOptions = {
-    origin: function (origin, callback) {
-      if (whitelist.indexOf(origin) !== -1 || !origin) {
-        callback(null, true)
-      } else {
-        callback(new Error('Not allowed by CORS'))
-      }
-    },
-      methods: ['POST',  'GET', 'OPTIONS', 'HEAD'],
-      // allowedHeaders: ['cookie'],
-    credentials: true
-  }
+  origin: whitelist,
+  methods: ["POST", "GET", "OPTIONS", "HEAD"],
+  // allowedHeaders: ['cookie'],
+  credentials: true
+};
 
+app.use(cors(corsOptions));
 
-app.use(cors(corsOptions))
+import auth from "./routes/auth.js";
+import admin from "./routes/admin.js";
 
+app.use("/doctor/v1", admin);
 
-import auth from "./routes/auth.js"
-import admin from "./routes/admin.js"
+app.use("/auth/v1/", auth);
 
-app.use("/admin/v1",admin)
+app.get("/", (req, res) => {
+  res.send("Ping");
+});
 
-app.use("/auth/v1/", auth)
+const PORT = 5000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
 
-app.get("/", (req, res)=>{
-    res.send("Ping");
-})
-
-
-
-const PORT = 5000
-app.listen(PORT, ()=>{
-    console.log(`Server is running on port ${PORT}`)
-})
-
-
-export * from '@prisma/client'
+export * from "@prisma/client";
