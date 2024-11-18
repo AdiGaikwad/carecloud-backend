@@ -102,6 +102,20 @@ router.post("/login", async (req, res) => {
 });
 
 
+router.post("/ask/doctor/access", authCheck, async(req, res)=>{
+  let {patientId, doctorId} = req.body
+
+  console.log(patientId)
+  let patient = await prisma.user.findFirst({
+    where: {
+      OR: [{ email: patientId }, { id: patientId }],
+    },
+  });
+
+  res.json({Success: true, msg: "Hello", patient})
+})
+
+
 router.get("/get/user/data", authCheck,  async (req, res)=>{
  res.json(req.user)
 })
