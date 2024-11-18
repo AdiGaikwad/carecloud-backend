@@ -7,7 +7,7 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 import { customAlphabet } from "nanoid";
 const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const nanoid = customAlphabet(alphabet, 8);
+const nanoid = customAlphabet(alphabet, 12);
 import jwt from "jsonwebtoken";
 import authCheck from "../middlewares/authCheck.js"
 router.get("/status", (req, res) => {
@@ -31,7 +31,8 @@ router.post("/register", async (req, res) => {
           firstName,
           lastName,
           password: hashed,
-          id: `CCH-U${nanoid(8)}`,
+          role: "user",
+          id: `CCH-U${nanoid(3)}${nanoid(8)}`,
         },
       });
       res.status(201).json({
@@ -65,7 +66,7 @@ router.post("/login", async (req, res) => {
       if (!user) {
         return res.json({
           Error: true,
-          message: "Incorrect HealthID or email.",
+          msg: "Incorrect HealthID or email.",
         });
       }
 
