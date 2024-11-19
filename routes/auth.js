@@ -9,7 +9,7 @@ import { customAlphabet } from "nanoid";
 const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const nanoid = customAlphabet(alphabet, 12);
 import jwt from "jsonwebtoken";
-import authCheck from "../middlewares/authCheck.js"
+import authCheck from "../middlewares/authCheck.js";
 router.get("/status", (req, res) => {
   res.json({
     message: "Server is up",
@@ -24,7 +24,7 @@ router.post("/register", async (req, res) => {
     let hash256 = createHash("sha256").update(password).digest("hex");
     let salt = bcrypt.genSaltSync(SALT_ROUNDS);
     let hashed = bcrypt.hashSync(hash256, salt);
-    try   {
+    try {
       const user = await prisma.user.create({
         data: {
           email,
@@ -101,23 +101,157 @@ router.post("/login", async (req, res) => {
   }
 });
 
+router.post("/ask/doctor/access", authCheck, async (req, res) => {
+  const otpseed = "1234567890";
+  let { patientId, doctorId } = req.body;
 
-router.post("/ask/doctor/access", authCheck, async(req, res)=>{
-  let {patientId, doctorId} = req.body
-
-  console.log(patientId)
   let patient = await prisma.user.findFirst({
     where: {
       OR: [{ email: patientId }, { id: patientId }],
     },
   });
+  let checkAccess = await prisma.access.findFirst({
+    where: {userId: patient.id}
+  })
+  console.log(checkAccess)
+  if (patient) {
+    if(!checkAccess){
 
-  res.json({Success: true, msg: "Hello", patient})
-})
+    const otp = customAlphabet(otpseed, 6);
+    let updated = await prisma.user.update({
+      where: { id: patient.id },
+      data: {
+        otp: {
+          otp: otp(),
+          expires: Date.now() + 180000,
+          doctorId: doctorId,
+        },
+        otpExpires: (Date.now() + 180000).toString(),
+      },
+    });
+    res.json({
+      Success: true,
+      msg: "Successfully sent request. Please enter OTP",
+      updated,
+    });
+  }
+  else{
+    res.json({ Error: true, msg: "Access Already provided. Please revoke or wait for some time ", patient });
 
+  }
+  } else {
+    res.json({ Error: true, msg: "Incorrect Health Id or Email ", patient });
+  }
+});
 
-router.get("/get/user/data", authCheck,  async (req, res)=>{
- res.json(req.user)
-})
+router.post("/grant/doctor/access", authCheck, async (req, res) => {
+  let { patientId, otp, duration } = req.body;
+  if (patientId && otp && duration) {
+    let patient = await prisma.user.findFirst({
+      where: {
+        OR: [{ email: patientId }, { id: patientId }],
+      },
+    });
+    let doctor = await prisma.doctor.findFirst({
+      where: {
+        id: req.user.user.id,
+      },
+    });
+
+    console.log(patient);
+
+    if (patient && doctor) {
+      let current = Date.now();
+      // console.log(current)
+      const expires = new Date();
+      expires.setMinutes(expires.getMinutes() + duration);
+      if (patient.otp.otp == otp && Number(patient.otp.expires) > current) {
+        const access = await prisma.access.create({
+          data: {
+            accessid: "CCA-" + nanoid(18),
+            doctorId: doctor.id,
+            userId: patient.id,
+            expires,
+          },
+        });
+
+        let clear =  {
+          otp: patient.otp.otp,
+          expires: Date.now(),
+          doctorId: doctor.id,
+        }
+        console.log(clear)
+        let clearOtp = await prisma.user.update({
+          where: {id: patient.id},
+          data:{
+            otp: {
+              otp: patient.otp.otp,
+              expires: Date.now(),
+              doctorId: doctor.id,
+            },
+            otpExpires: (Date.now()).toString(),
+          }
+        })
+        if(clearOtp){
+
+          res.json({
+            Success: true,
+            msg:
+            "Successfully Verified OTP ! Access granted for " +
+            duration +
+            " Minutes",
+            access,
+          });
+        }
+        else{
+          res.json({
+            Success: true,
+            msg:
+            "Successfully Verified OTP ! Access 2 granted for " +
+            duration +
+            " Minutes",
+            access,
+          });
+        }
+       
+      } else {
+        res.json({
+          Error: true,
+          msg: "Invalid or Expired Otp ",
+        });
+      }
+    } else {
+      res.json({
+        Error: true,
+        msg: "Unable to process request. Try again later",
+      });
+    }
+  } else {
+    res.json({ Error: true, msg: "Invalid Inputs" });
+  }
+});
+
+router.get("/get/user/data", authCheck, async (req, res) => {
+  res.json(req.user);
+});
+
+router.get("/check/request", authCheck, async (req, res) => {
+  let current = Date.now();
+
+  const check = await prisma.user.findUnique({
+    where: {
+      id: req.user.user.id,
+    },
+  });
+
+  if (Number(check && check.otp && check.otp.expires && check.otp.expires ) > current) {
+    const { password, ...newUser } = check;
+
+    res.json({ Success: true, check: newUser });
+  }
+  else{
+    res.json({Error: true, msg: " No Recent Requests"})
+  }
+});
 
 export default router;

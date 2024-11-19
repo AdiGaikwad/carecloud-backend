@@ -81,9 +81,7 @@ router.post("/login", async (req, res) => {
 
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
-        res.json({ Error: true,
-          msg: "Incorrect Password",
-        });
+        res.json({ Error: true, msg: "Incorrect Password" });
       } else {
         try {
           const { password, ...newUser } = user;
@@ -106,6 +104,38 @@ router.post("/login", async (req, res) => {
       Error: true,
       msg: "Please check your inputs ",
     });
+  }
+});
+
+router.get("/check/access", authCheck, async (req, res) => {
+  let access = await prisma.access.findFirst({
+    where: { doctorId: req.user.user.id },
+  });
+
+  if (access) {
+    res.json({ Success: true, access });
+  } else {
+    res.json({ Error: true, msg: "No Access is found " });
+  }
+});
+
+router.get("/get/access/data", authCheck, async (req, res) => {
+  let access = await prisma.access.findFirst({
+    where: { doctorId: req.user.user.id },
+  });
+  if (access) {
+    const user = await prisma.user.findUnique({
+      where: { id: access.userId },
+    });
+    if (user) {
+      const { password, ...newUser } = user;
+
+      res.json({ Success: true, user: newUser });
+    } else {
+      res.json({ Error: true, msg: "No Access is found Please retry " });
+    }
+  } else {
+    res.json({ Error: true, msg: "No Access is found " });
   }
 });
 

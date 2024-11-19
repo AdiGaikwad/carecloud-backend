@@ -23,7 +23,8 @@ model User {
   phone         String?        @unique
   age           Int?
   gender        String?
-  otp           Int?
+  otp           Json?
+  otpExpires    String?
   verifications Verification[]
   doctorAccess  Access[]
   createdAt     DateTime       @default(now())
@@ -50,14 +51,14 @@ model Doctor {
 }
 
 model Access {
-  accessid  String   @id @unique @default(uuid())
-  doctorId  String
-  userId    String
-  doctor    Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expires   DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  accessid         String   @id @unique @default(uuid())
+  doctorId         String
+  userId           String
+  doctor           Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expires          DateTime
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 model Verification {

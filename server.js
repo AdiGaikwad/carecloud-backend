@@ -3,11 +3,12 @@ import bodyParser from "body-parser";
 import cors from "cors";
 const app = express();
 import cookieParser from "cookie-parser";
-
+import morgan from "morgan"
 app.use(cookieParser());
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+
 
 let whitelist = [
   "http://localhost:5000",
@@ -39,6 +40,7 @@ var corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.use(morgan("dev"))
 
 import auth from "./routes/auth.js";
 import admin from "./routes/admin.js";
