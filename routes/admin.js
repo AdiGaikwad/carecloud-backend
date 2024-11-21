@@ -120,23 +120,20 @@ router.get("/check/access", authCheck, async (req, res) => {
 
   let access = await prisma.access.findMany({
     where: { doctorId: req.user.user.id },
-    orderBy:{
-      createdAt: "desc"
-    }
+    orderBy: {
+      createdAt: "desc",
+    },
   });
 
   if (access && access.length > 0) {
     const timestamp = convertToTimestamp(access[0].expires);
-    console.log(timestamp)
-    console.log(access[0].expires)
+    console.log(timestamp);
+    console.log(access[0].expires);
 
-    if( Number(timestamp) > current){
-
+    if (Number(timestamp) > current) {
       res.json({ Success: true, access: access[0] });
-    }
-    else{
-    res.json({ Error: true, msg: "Access Expired. Request Again " });
-
+    } else {
+      res.json({ Error: true, msg: "Access Expired. Request Again " });
     }
   } else {
     res.json({ Error: true, msg: "No Access is found " });
@@ -148,33 +145,67 @@ router.get("/get/access/data", authCheck, async (req, res) => {
 
   let access = await prisma.access.findMany({
     where: { doctorId: req.user.user.id },
-    orderBy:{
-      createdAt: "desc"
-    }
+    orderBy: {
+      createdAt: "desc",
+    },
   });
   if (access && access.length > 0) {
-
     const timestamp = convertToTimestamp(access[0].expires);
-    if( timestamp > current){
+    if (timestamp > current) {
+      const user = await prisma.user.findUnique({
+        where: { id: access[0].userId },
+      });
+      if (user) {
+        const { password, ...newUser } = user;
 
-    const user = await prisma.user.findUnique({
-      where: { id: access[0].userId },
-    });
-    if (user) {
-      const { password, ...newUser } = user;
-
-      res.json({ Success: true, user: newUser });
+        res.json({ Success: true, user: newUser });
+      } else {
+        res.json({ Error: true, msg: "No Access is found Please retry " });
+      }
     } else {
-      res.json({ Error: true, msg: "No Access is found Please retry " });
+      res.json({ Error: true, msg: "Access Expired. Please request again  " });
     }
-  }
-  else{
-
-    res.json({ Error: true, msg: "Access Expired. Please request again  " });
-  }
-
   } else {
     res.json({ Error: true, msg: "No Access is found " });
+  }
+});
+
+const accessCheck = async (id) => {
+  let current = Date.now();
+  let access = await prisma.access.findMany({
+    where: { doctorId: id },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  if (access && access.length > 0) {
+    const timestamp = convertToTimestamp(access[0].expires);
+    // console.log(timestamp);
+    // console.log(access[0].expires);
+
+    if (Number(timestamp) > current) {
+      return access[0];
+      // res.json({ Success: true, access: access[0] });
+    } else {
+      return false;
+      // res.json({ Error: true, msg: "Access Expired. Request Again " });
+    }
+  } else {
+    return false;
+    // res.json({ Error: true, msg: "No Access is found " });
+  }
+};
+
+router.post("/create/report", authCheck, async (req, res) => {
+  const { userId, type, symptoms, diagnosis, treatmentplan } = req.body;
+
+  if (userId && type && symptoms && diagnosis && treatmentplan) {
+    let access = await accessCheck(req.user.user.id);
+    if (access) {
+    }
+  } else {
+    
   }
 });
 
