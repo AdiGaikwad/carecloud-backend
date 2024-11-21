@@ -107,25 +107,58 @@ router.post("/login", async (req, res) => {
   }
 });
 
+function convertToTimestamp(datetimeString) {
+  // Parse the datetime string and create a Date object
+  const date = new Date(datetimeString);
+
+  // Return the timestamp in milliseconds
+  return date.getTime();
+}
+
 router.get("/check/access", authCheck, async (req, res) => {
-  let access = await prisma.access.findFirst({
+  let current = Date.now();
+
+  let access = await prisma.access.findMany({
     where: { doctorId: req.user.user.id },
+    orderBy:{
+      createdAt: "desc"
+    }
   });
 
-  if (access) {
-    res.json({ Success: true, access });
+  if (access && access.length > 0) {
+    const timestamp = convertToTimestamp(access[0].expires);
+    console.log(timestamp)
+    console.log(access[0].expires)
+
+    if( Number(timestamp) > current){
+
+      res.json({ Success: true, access: access[0] });
+    }
+    else{
+    res.json({ Error: true, msg: "Access Expired. Request Again " });
+
+    }
   } else {
     res.json({ Error: true, msg: "No Access is found " });
   }
 });
 
 router.get("/get/access/data", authCheck, async (req, res) => {
-  let access = await prisma.access.findFirst({
+  let current = Date.now();
+
+  let access = await prisma.access.findMany({
     where: { doctorId: req.user.user.id },
+    orderBy:{
+      createdAt: "desc"
+    }
   });
-  if (access) {
+  if (access && access.length > 0) {
+
+    const timestamp = convertToTimestamp(access[0].expires);
+    if( timestamp > current){
+
     const user = await prisma.user.findUnique({
-      where: { id: access.userId },
+      where: { id: access[0].userId },
     });
     if (user) {
       const { password, ...newUser } = user;
@@ -134,6 +167,12 @@ router.get("/get/access/data", authCheck, async (req, res) => {
     } else {
       res.json({ Error: true, msg: "No Access is found Please retry " });
     }
+  }
+  else{
+
+    res.json({ Error: true, msg: "Access Expired. Please request again  " });
+  }
+
   } else {
     res.json({ Error: true, msg: "No Access is found " });
   }

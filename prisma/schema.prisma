@@ -8,31 +8,35 @@ datasource db {
 }
 
 model User {
-  id            String         @id @unique @default(uuid())
+  id         String    @id @unique @default(uuid())
   // username               String          @unique
-  password      String
-  role          String
-  avatar        String?
-  cover         String?
-  firstName     String?
-  lastName      String?
-  bio           String?
-  bloodgroup    String?
-  address       String?
-  email         String         @unique
-  phone         String?        @unique
-  age           Int?
-  gender        String?
-  otp           Json?
-  otpExpires    String?
+  password   String
+  role       String
+  avatar     String?
+  cover      String?
+  firstName  String?
+  lastName   String?
+  bio        String?
+  bloodgroup String?
+  address    String?
+  email      String    @unique
+  phone      String?   @unique
+  reports    Reports[]
+  files      Files[]
+  age        Int?
+  gender     String?
+  otp        Json?
+  otpExpires String?
+
   verifications Verification[]
+  notifications Notifications[]
   doctorAccess  Access[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 }
 
 model Doctor {
-  id         String   @id @unique @default(uuid())
+  id         String    @id @unique @default(uuid())
   password   String
   role       String
   avatar     String?
@@ -41,24 +45,67 @@ model Doctor {
   lastName   String?
   bio        String?
   address    String?
-  email      String   @unique
-  phone      String?  @unique
+  email      String    @unique
+  phone      String?   @unique
   age        Int?
   gender     String?
+  reports    Reports[]
+  files      Files[]
   userAccess Access[]
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Files {
+  id          String   @id @unique @default(uuid())
+  userId      String
+  doctorid    String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  doctor      Doctor   @relation(fields: [doctorid], references: [id], onDelete: Cascade)
+  title       String
+  description String
+  path        String
+  size        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Reports {
+  id            String   @id @unique @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  doctor        Doctor   @relation(fields: [doctorid], references: [id], onDelete: Cascade)
+  title         String?
+  type          String
+  symptoms      String
+  diagnosis     String
+  treatmentplan String
+  doctorid      String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Notifications {
+  notificationId String   @id @unique @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type           String?
+  title          String?
+  message        String?
+  read           Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model Access {
-  accessid         String   @id @unique @default(uuid())
-  doctorId         String
-  userId           String
-  doctor           Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expires          DateTime
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  accessid  String   @id @unique @default(uuid())
+  doctorId  String
+  userId    String
+  doctor    Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expires   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Verification {
