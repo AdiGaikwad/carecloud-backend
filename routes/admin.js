@@ -154,6 +154,14 @@ router.get("/get/access/data", authCheck, async (req, res) => {
     if (timestamp > current) {
       const user = await prisma.user.findUnique({
         where: { id: access[0].userId },
+        include:{
+          reports: {
+            include: true,
+            orderBy: {
+              createdAt: "desc"
+            }
+          }
+        }
       });
       if (user) {
         const { password, ...newUser } = user;
@@ -203,9 +211,34 @@ router.post("/create/report", authCheck, async (req, res) => {
   if (userId && type && symptoms && diagnosis && treatmentplan) {
     let access = await accessCheck(req.user.user.id);
     if (access) {
+      try {
+        let report = await prisma.reports.create({
+          data: {
+            id: "CCR-" + nanoid(12),
+            userId,
+            type,
+            symptoms,
+            diagnosis,
+            treatmentplan,
+            doctorid: req.user.user.id,
+          },
+        });
+        if (report) {
+          res.json({
+            Success: true,
+            msg: "Report creation successfull  ",
+            report,
+          });
+        }
+      } catch (err) {
+        res.json({
+          Error: true,
+          msg: "Report creation failed. Please try again later ",
+        });
+      }
     }
   } else {
-    
+    res.json({ Error: true, msg: "Access not available " });
   }
 });
 
