@@ -361,4 +361,36 @@ router.post("/revoke/access", authCheck, async (req, res) => {
     res.json({ Error: true, msg: "Unable to revoke access. Try again later" });
   }
 });
+
+router.get("/get/reports", authCheck, async (req, res) => {
+  const reports = await prisma.reports.findMany({
+    where: {
+      userId: req.user.user.id,
+    },
+    include: {
+      doctor: {
+        select: {
+          address: true,
+          age: true,
+          avatar: true,
+          bio: true,
+          createdAt: true,
+          firstName: true,
+          lastName: true,
+          id: true,
+          role: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  if (reports) {
+    res.json({ Success: true, reports });
+  } else {
+    res.json({ Error: true, msg: "Reports not found " });
+  }
+});
 export default router;
